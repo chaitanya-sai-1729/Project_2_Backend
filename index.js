@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({extended:true}));
 
 const {MongoClient,ServerApiVersion, ConnectionClosedEvent} = require("mongodb");
-const uri = "mongodb+srv://chaitanyasaim5:chaitanyasai@tracking.5sl6mtx.mongodb.net/Tracking";
+const uri = "mongodb+srv://chaitanyasaim5:chaitanyasai@cluster0.klesare.mongodb.net/GPS_Tracker";
 const client = new MongoClient(uri,{
     useNewUrlParser:true,
     useUnifiedTopology:true,
@@ -26,34 +26,40 @@ app.get("/home",(req,res)=>{
     
 })
 app.post("/home", async (req, res) => {
-    var latitude = req.body.latitude;
-    var longitude = req.body.longitude;
-    var _id = req.body._id;
-    var accuracy = req.body.accuracy;
-    const collection = client.db().collection("location");
-  
-    const existingUser = await collection.findOne({ _id });
-  
-    if (existingUser) {
-      // User exists in the database
-      if (latitude !== "" && longitude !== "") {
-        // Both lat and lon are not null, update the user data
-        await collection.updateOne({ _id }, { $set: { latitude, longitude, accuracy } });
-        res.status(200).json({ message: "User data updated successfully" });
-      } else {
-        // Either lat or lon is null, no update needed
-        res.status(200).json({ message: "User data not updated" });
-      }
+  var latitude = req.body.latitude;
+  var longitude = req.body.longitude;
+  var _id = req.body._id;
+  var accuracy = req.body.accuracy;
+  var date = req.body.formattedDate; // Renamed from 'Date' to 'date' to avoid conflict with JavaScript Date object
+  const collection = client.db().collection("location");
+
+  const existingUser = await collection.findOne({ _id });
+
+  if (existingUser) {
+    // User exists in the database
+    if (latitude !== "" && longitude !== "") {
+      // Both lat and lon are not null, update the user data
+      existingUser[date] = existingUser[date] || [];
+      existingUser[date].push({ latitude, longitude, accuracy });
+      await collection.updateOne({ _id }, { $set: { [date]: existingUser[date] } });
+      res.status(200).json({ message: "User data updated successfully" });
     } else {
-      // User does not exist, insert new user if lat and lon are not null
-      if (latitude !== "" && longitude !== "") {
-        await collection.insertOne({ _id, latitude, longitude, accuracy });
-        res.status(200).json({ message: "User data inserted successfully" });
-      } else {
-        res.status(200).json({ message: "User data not inserted" });
-      }
+      // Either lat or lon is null, no update needed
+      res.status(200).json({ message: "User data not updated" });
     }
-  });
+  } else {
+    // User does not exist, insert new user if lat and lon are not null
+    if (latitude !== "" && longitude !== "") {
+      const GPS = [{ latitude, longitude, accuracy }];
+      const userData = { _id, [date]: GPS };
+      await collection.insertOne(userData);
+      res.status(200).json({ message: "User data inserted successfully" });
+    } else {
+      res.status(200).json({ message: "User data not inserted" });
+    }
+  }
+});
+
   
   
 
