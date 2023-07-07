@@ -121,6 +121,7 @@ app.post("/admins",async(req,res)=>{
   
 })
 
+
 app.get("/admins",async(req,res)=>{
   const collection = client.db().collection("admins");
 
@@ -134,7 +135,30 @@ app.get("/admins",async(req,res)=>{
   }
 })
 
+app.get("/kiruba",async(req,res)=>{
+  const collection = client.db().collection("location");
 
+  try{
+    const user = await collection.find().toArray();
+    if(user){
+      for(var i=0;i<user.length;i++){
+        if(user[i]._id === "kiruba"){
+          const lastDate = Object.keys(user[i]).pop();
+          const output = user[i][lastDate];
+          res.send(output);
+          return ;
+        }
+      }
+      res.send([]);
+    }else{
+      console.log("user not found");
+    }
+
+  }catch(e){
+    console.log(e);
+  }
+
+})
 
 
 app.listen("4000",()=>{
