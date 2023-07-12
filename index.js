@@ -26,11 +26,11 @@ app.get("/home",(req,res)=>{
     
 })
 app.post("/home", async (req, res) => {
-  var latitude = req.body.latitude;
-  var longitude = req.body.longitude;
-  var _id = req.body._id;
-  var accuracy = req.body.accuracy;
-  var date = req.body.formattedDate; // Renamed from 'Date' to 'date' to avoid conflict with JavaScript Date object
+  var latitude = req.body.latitude || req.query.latitude;
+  var longitude = req.body.longitude || req.query.longitude;
+  var _id = req.body._id || req.query._id;
+  var accuracy = req.body.accuracy || req.query.accuracy;
+  var date = req.body.formattedDate || req.query.formattedDate; // Renamed from 'Date' to 'date' to avoid conflict with JavaScript Date object
   const collection = client.db().collection("location");
 
   const existingUser = await collection.findOne({ _id });
@@ -59,6 +59,37 @@ app.post("/home", async (req, res) => {
     }
   }
 });
+
+// app.post("/home", async (req, res) => {
+//   const latitude = req.query.latitude ;
+//   const longitude = req.query.longitude;
+//   const accuracy = req.query.accuracy;
+//   const formattedDate = req.query.formattedDate;
+//   const _id = req.query._id;
+
+//   if (latitude && longitude && accuracy && formattedDate && _id) {
+//     const collection = client.db().collection("location");
+//     const existingUser = await collection.findOne({ _id });
+
+//     if (existingUser) {
+//       // User exists in the database, update the user data
+//       existingUser[formattedDate] = existingUser[formattedDate] || [];
+//       existingUser[formattedDate].push({ latitude, longitude, accuracy });
+//       await collection.updateOne({ _id }, { $set: { [formattedDate]: existingUser[formattedDate] } });
+//       res.status(200).json({ message: "User data updated successfully" });
+//     } else {
+//       // User does not exist, insert new user
+//       const GPS = [{ latitude, longitude, accuracy }];
+//       const userData = { _id, [formattedDate]: GPS };
+//       await collection.insertOne(userData);
+//       res.status(200).json({ message: "User data inserted successfully" });
+//     }
+//   } else {
+//     res.status(400).json({ message: "Invalid parameters provided" });
+//   }
+// });
+
+
 
   
   
